@@ -1,0 +1,144 @@
+<div class="mx-auto bg-white rounded-lg shadow-md p-6">
+  <h1 class="text-2xl font-bold mb-4 text-slate-800">
+    Check var quyên góp bão lũ 09/2024
+  </h1>
+  <div id="searchContainer" class="mb-6">
+    <div class="flex">
+      <input
+        type="search"
+        id="searchInput"
+        placeholder="Nhập từ khóa tìm kiếm"
+        class="flex-grow px-4 py-2 border border-slate-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 max-lg:px-2 max-lg:py-1.5 max-lg:text-sm"
+      />
+      <button
+        id="searchButton"
+        class="bg-blue-500 text-white px-6 py-2 max-lg:px-2 max-lg:py-1.5 max-lg:text-sm rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        Tìm kiếm
+      </button>
+    </div>
+  </div>
+  <div id="loading" class="hidden text-center text-sky-600 my-4">
+    <svg class="animate-spin h-5 w-5 mr-3 inline-block" viewBox="0 0 24 24">
+      <circle
+        class="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        stroke-width="4"
+      ></circle>
+      <path
+        class="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      ></path>
+    </svg>
+    Đang tìm kiếm...
+  </div>
+  <div class="overflow-x-auto mb-4">
+    <table id="dataTable" class="w-full">
+      <thead>
+        <tr
+          class="bg-sky-400 uppercase text-sm leading-normal border-b-2 border-slate-100"
+        >
+          <th class="py-3 px-6 text-left text-white min-w-24">Ngày GD</th>
+          <th class="py-3 px-6 text-left text-white min-w-24">Số tiền</th>
+          <th class="py-3 px-6 text-left text-white min-w-24">Nội dung</th>
+          <th class="py-3 px-6 text-left text-white min-w-24">Mã GD</th>
+        </tr>
+      </thead>
+      <tbody id="dataBody">
+
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  $(document).ready(function () {
+  let dataTable;
+
+  const formatter = new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  });
+
+  function removeVietnameseAccents(str) {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+  }
+
+  function highlightKeyword(text, keyword) {
+    const regex = new RegExp(`(${keyword})`, 'gi');
+    return text.replace(regex, '<span style="background-color: yellow;">$1</span>');
+  }
+
+  function fetchTransactions(query) {
+    if (query) {
+      $('#loading').removeClass('hidden');
+
+      $.ajax({
+        url: `/api/transactions/search?q=${query}`,
+        method: 'GET',
+        success: function (data) {
+          $('#loading').addClass('hidden');
+          
+          const dataBody = $('#dataBody');
+          dataBody.empty();
+
+          if (data.transactions.length > 0) {
+            data.transactions.forEach(transaction => {
+              const date = highlightKeyword(transaction.Date, query);
+              const value = highlightKeyword(formatter.format(transaction.Value), query);
+              const description = highlightKeyword(transaction.Description, query);
+              const code = highlightKeyword(transaction.Code, query);
+
+              const row = `
+                <tr>
+                  <td class="py-3 px-6">${date}</td>
+                  <td class="py-3 px-6">${value}</td>
+                  <td class="py-3 px-6">${description}</td>
+                  <td class="py-3 px-6">${code}</td>
+                </tr>
+              `;
+              dataBody.append(row);
+            });
+
+            if ($.fn.DataTable.isDataTable('#dataTable')) {
+              dataTable.clear().rows.add(dataBody.find('tr')).draw();
+            } else {
+              dataTable = $('#dataTable').DataTable({
+                paging: true,
+                searching: false,
+                ordering: true,
+                info: true,
+                autoWidth: false,
+              });
+            }
+          } else {
+            dataBody.append(`
+              <tr>
+                <td colspan="4" class="text-center py-3">Không tìm thấy kết quả</td>
+              </tr>
+            `);
+          }
+        },
+        error: function () {
+          $('#loading').addClass('hidden');
+          alert('Lỗi tìm kiếm, vui lòng thử lại!');
+        },
+      });
+    } else {
+      alert('Vui lòng nhập từ khóa tìm kiếm');
+    }
+  }
+
+  $('#searchButton').click(function () {
+    let query = $('#searchInput').val().trim();
+    query = removeVietnameseAccents(query);
+    fetchTransactions(query);
+  });
+});
+
+
+</script>
