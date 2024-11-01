@@ -36,7 +36,7 @@ const Transaction = {
       WHERE Code LIKE ? OR Value LIKE ? OR Description LIKE ?
     `;
     const searchTerm = `%${query}%`; 
-    connection.query(sql, [searchTerm, searchTerm, searchTerm], (err, results) => {
+    connection.query(sql, [searchTerm, query, searchTerm], (err, results) => {
       if (err) return callback(err, null);
       return callback(null, results);
     });
