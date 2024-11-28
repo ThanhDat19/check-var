@@ -90,13 +90,14 @@
             data.transactions.forEach(transaction => {
               const date = highlightKeyword(transaction.Date, query);
               const value = highlightKeyword(formatter.format(transaction.Value), query);
+             // const value = highlightKeyword(transaction.Value, query);
               const description = highlightKeyword(transaction.Description, query);
               const code = highlightKeyword(transaction.Code, query);
 
               const row = `
                 <tr>
                   <td class="py-3 px-6">${date}</td>
-                  <td class="py-3 px-6">${value}</td>
+                  <td class="py-3 px-6" data-order="${transaction.Value}" >${value}</td>
                   <td class="py-3 px-6">${description}</td>
                   <td class="py-3 px-6">${code}</td>
                 </tr>
