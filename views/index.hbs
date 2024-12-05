@@ -7,7 +7,7 @@
       <input
         type="search"
         id="searchInput"
-        placeholder="Nhập từ khóa tìm kiếm"
+        placeholder="Nhập nội dung /số tiền /mã giao dịch"
         class="flex-grow px-4 py-2 border border-slate-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 max-lg:px-2 max-lg:py-1.5 max-lg:text-sm"
       />
       <button
@@ -81,12 +81,13 @@
         url: `/api/transactions/search?q=${query}`,
         method: 'GET',
         success: function (data) {
+
           $('#loading').addClass('hidden');
           
           const dataBody = $('#dataBody');
           dataBody.empty();
 
-          if (data.transactions.length > 0) {
+          if (data && data.transactions.length > 0) {
             data.transactions.forEach(transaction => {
               const date = highlightKeyword(transaction.Date, query);
               const value = highlightKeyword(formatter.format(transaction.Value), query);
@@ -117,11 +118,19 @@
               });
             }
           } else {
-            dataBody.append(`
-              <tr>
-                <td colspan="4" class="text-center py-3">Không tìm thấy kết quả</td>
-              </tr>
-            `);
+            if ($.fn.DataTable.isDataTable('#dataTable')) {
+              const dataTable = $('#dataTable').DataTable();
+              dataTable.clear(); // Xóa sạch dữ liệu trong bảng
+              dataTable.draw();  // Vẽ lại bảng để hiển thị trạng thái trống
+            } else {
+              {{!-- dataTable = $('#dataTable').DataTable({
+                paging: false,
+                searching: false,
+                ordering: true,
+                info: true,
+                autoWidth: false,
+              }); --}}
+            }
           }
         },
         error: function () {
@@ -135,7 +144,7 @@
   }
 
   $('#searchButton').click(function () {
-    let query = $('#searchInput').val().trim();
+    let query = $('#searchInput').val().trim().replace(/\s+/g, " ");
     query = removeVietnameseAccents(query);
     fetchTransactions(query);
   });
