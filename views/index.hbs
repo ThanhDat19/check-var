@@ -148,6 +148,14 @@
     query = removeVietnameseAccents(query);
     fetchTransactions(query);
   });
+
+  $('#searchInput').on('keydown', function (){
+    if (event.key === 'Enter') {
+    let query = $(this).val().trim().replace(/\s+/g, " ");
+    query = removeVietnameseAccents(query);
+    fetchTransactions(query);
+    }
+  })
 });
 
 
